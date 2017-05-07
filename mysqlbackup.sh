@@ -17,14 +17,14 @@ ftpupdir="" #Diretorio ftp pra onde vao os backups
 prefixbkp="mysqlbackup" #Prefixo dos backups
 
 for db in ${dbs[@]}; do
-	mysqldump --user=$user --password=$pass --host=$host --single-transaction $db > $localdir/$prefixbkp-$db-$data.sql
+	mysqldump --user=$user --password=$pass --host=$host --single-transaction $db | gzip > $localdir/$prefixbkp-$db-$data.sql.gz
 	echo "Backup de $db em andamento..."
 	if  [ $duplftp == true ]; then
 		ftp -ni $ftpserver <<EOMF0
 		user $ftpusuario $ftpsenha
 		lcd $localdir
 		cd $ftpupdir
-		mput $prefixbkp-$db-$data.sql
+		mput $prefixbkp-$db-$data.sql.gz
 		bye
 EOMF0
 	else
@@ -33,6 +33,7 @@ EOMF0
 done;
 echo "Excluindo backups antigos..."
 find $localdir/*.sql -ctime +$diasr -exec rm {} \;
+find $localdir/*.sql.gz -ctime +$diasr -exec rm {} \;
 if [ $duplftp == true ]; then
 		MM='date --date="$diasr days ago" +%b'
 		DD='date --date="$diasr days ago" +%d'
